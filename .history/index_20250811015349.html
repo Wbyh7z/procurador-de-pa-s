@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dados de Países</title>
+</head>
+<body>
+  <input id="search" type="text" placeholder="Digite o nome do país">
+  <ul id="list"></ul>
+
+  <script>
+    const list = document.getElementById('list');
+    const search = document.getElementById('search');
+
+    let countries = [];
+
+    // Pega todos os países da API
+    fetch('https://restcountries.com/v3.1/all')
+      .then(res => res.json())
+      .then(data => {
+        countries = data;
+        renderList(countries);
+      });
+
+    // Renderiza lista filtrada
+    function renderList(items) {
+      list.innerHTML = '';
+      items.forEach(country => {
+        const li = document.createElement('li');
+        li.textContent = `${country.name.common} - População: ${country.population}`;
+        list.appendChild(li);
+      });
+    }
+
+    // Filtra conforme o que usuário digita
+    search.addEventListener('input', () => {
+      const filtered = countries.filter(c =>
+        c.name.common.toLowerCase().includes(search.value.toLowerCase())
+      );
+      renderList(filtered);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Países com Bandeiras</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #f5f5f5;
+        margin: 0;
+        padding: 0;
+    }
+    header {
+        background: #333;
+        color: white;
+        padding: 1rem;
+        text-align: center;
+    }
+    #search {
+        width: 90%;
+        max-width: 400px;
+        padding: 0.5rem;
+        margin: 1rem auto;
+        display: block;
+    }
+    #countries {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 1rem;
+        padding: 1rem;
+    }
+    .card {
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        cursor: pointer;
+        text-align: center;
+        padding-bottom: 0.5rem;
+    }
+    .flag {
+        width: 100%;
+        height: 100px;
+        background: #eee;
+    }
+    .flag img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .name {
+        font-weight: bold;
+        margin-top: 0.5rem;
+    }
+    .meta {
+        font-size: 0.9rem;
+        color: #555;
+    }
+    /* Modal */
+    #modal {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.6);
+        align-items: center;
+        justify-content: center;
+    }
+    #modalContent {
+        background: white;
+        padding: 2rem;
+        border-radius: 10px;
+        max-width: 400px;
+        width: 90%;
+        text-align: center;
+    }
+    #modalFlag img {
+        width: 150px;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+    }
+</style>
+</head>
+<body>
+
+<header>
+    <h1>Lista de Países</h1>
+</header>
+
+<input type="text" id="search" placeholder="Digite o nome do país...">
+
+<div id="countries"></div>
+
+<!-- Modal -->
+<div id="modal">
+    <div id="modalContent">
+        <div id="modalFlag"></div>
+        <h2 id="modalName"></h2>
+        <p><strong>Capital:</strong> <span id="modalCapital"></span></p>
+        <p><strong>Região:</strong> <span id="modalRegion"></span></p>
+        <button onclick="closeModal()">Fechar</button>
+    </div>
+</div>
+
+<script>
+const countriesContainer = document.getElementById('countries');
+const searchInput = document.getElementById('search');
+const modal = document.getElementById('modal');
+const modalFlag = document.getElementById('modalFlag');
+const modalName = document.getElementById('modalName');
+const modalCapital = document.getElementById('modalCapital');
+const modalRegion = document.getElementById('modalRegion');
+
+let countriesList = [];
+
+// Carrega todos os países
+async function loadCountries() {
+    try {
+        const res = await fetch('https://restcountries.com/v3.1/all');
+        const data = await res.json();
+
+        if (!Array.isArray(data)) {
+            console.error("Erro na API:", data);
+            countriesContainer.innerHTML = "<p>Erro ao carregar países.</p>";
+            return;
+        }
+
+        countriesList = data.sort((a,b) => a.name.common.localeCompare(b.name.common));
+        displayCountries(countriesList);
+    } catch (err) {
+        console.error(err);
+        countriesContainer.innerHTML = "<p>Erro de conexão.</p>";
+    }
+}
+
+// Mostra os países
+function displayCountries(list) {
+    countriesContainer.innerHTML = '';
+    list.forEach(country => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+            <div class="flag">
+                <img src="${country.flags.png}" alt="Bandeira de ${country.name.common}">
+            </div>
+            <div class="name">${country.name.common}</div>
+            <div class="meta">Capital: ${country.capital ? country.capital[0] : 'N/A'}</div>
+            <div class="meta">Região: ${country.region || 'N/A'}</div>
+        `;
+        card.addEventListener('click', () => openModal(country));
+        countriesContainer.appendChild(card);
+    });
+}
+
+// Abre o modal
+function openModal(country) {
+    modalFlag.innerHTML = `<img src="${country.flags.png}" alt="Bandeira de ${country.name.common}">`;
+    modalName.textContent = country.name.common;
+    modalCapital.textContent = country.capital ? country.capital[0] : 'N/A';
+    modalRegion.textContent = country.region || 'N/A';
+    modal.style.display = 'flex';
+}
+
+// Fecha o modal
+function closeModal() {
+    modal.style.display = 'none';
+}
+
+// Busca
+searchInput.addEventListener('input', () => {
+    const value = searchInput.value.toLowerCase();
+    const filtered = countriesList.filter(c => c.name.common.toLowerCase().includes(value));
+    displayCountries(filtered);
+});
+
+loadCountries();
+</script>
+
+</body>
+</html>

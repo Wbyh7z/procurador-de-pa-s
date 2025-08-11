@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>App Dados de Países</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f5f5f5;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    #search {
+      display: block;
+      margin: 0 auto 20px auto;
+      padding: 10px;
+      width: 300px;
+      font-size: 16px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    #countries-list {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+    }
+
+    .country-card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      width: 220px;
+      padding: 15px;
+      text-align: center;
+      transition: transform 0.2s;
+      cursor: pointer;
+    }
+
+    .country-card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .flag {
+      width: 100%;
+      height: 120px;
+      object-fit: contain;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      border: 1px solid #ddd;
+    }
+
+    .country-name {
+      font-weight: bold;
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+
+    .country-info {
+      font-size: 14px;
+      color: #555;
+    }
+
+    .loading {
+      text-align: center;
+      font-size: 18px;
+      margin-top: 40px;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Dados de Países 🌍</h1>
+  <input type="text" id="search" placeholder="Digite o nome do país..." />
+
+  <div id="countries-list">
+    <div class="loading">Carregando países...</div>
+  </div>
+
+  <script>
+    const countriesList = document.getElementById('countries-list');
+    const searchInput = document.getElementById('search');
+    let countries = [];
+
+    // Buscar todos os países da API
+    fetch('https://restcountries.com/v3.1/all')
+      .then(response => response.json())
+      .then(data => {
+        countries = data.sort((a, b) => a.name.common.localeCompare(b.name.common));
+        renderCountries(countries);
+      })
+      .catch(err => {
+        countriesList.innerHTML = '<p>Erro ao carregar os dados.</p>';
+        console.error(err);
+      });
+
+    // Renderiza a lista de países filtrados
+    function renderCountries(list) {
+      if(list.length === 0) {
+        countriesList.innerHTML = '<p>Nenhum país encontrado.</p>';
+        return;
+      }
+
+      countriesList.innerHTML = ''; // limpa antes
+
+      list.forEach(country => {
+        const card = document.createElement('div');
+        card.classList.add('country-card');
+
+        card.innerHTML = `
+          <img class="flag" src="${country.flags.svg}" alt="Bandeira de ${country.name.common}" />
+          <div class="country-name">${country.name.common}</div>
+          <div class="country-info">Capital: ${country.capital ? country.capital[0] : 'N/A'}</div>
+          <div class="country-info">População: ${country.population.toLocaleString('pt-BR')}</div>
+          <div class="country-info">Região: ${country.region}</div>
+        `;
+
+        countriesList.appendChild(card);
+      });
+    }
+
+    // Filtrar países enquanto digita
+    searchInput.addEventListener('input', () => {
+      const searchTerm = searchInput.value.toLowerCase().trim();
+
+      const filtered = countries.filter(country => 
+        country.name.common.toLowerCase().includes(searchTerm)
+      );
+
+      renderCountries(filtered);
+    });
+  </script>
+
+</body>
+</html>

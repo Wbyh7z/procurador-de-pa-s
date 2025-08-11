@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Países</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #f0f0f0;
+        }
+        .container {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: scale(1.05);
+        }
+        .flag {
+            width: 100%;
+            height: 120px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .name {
+            font-weight: bold;
+            margin-top: 10px;
+            font-size: 1.1em;
+        }
+        .meta {
+            color: #555;
+            font-size: 0.9em;
+        }
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 400px;
+            width: 90%;
+            position: relative;
+        }
+        .modal .flag {
+            width: 100%;
+            height: 200px;
+        }
+        .close {
+            position: absolute;
+            top: 10px; right: 15px;
+            cursor: pointer;
+            font-size: 1.5em;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container" id="country-container"></div>
+
+<div class="modal" id="country-modal">
+    <div class="modal-content">
+        <span class="close" id="modal-close">&times;</span>
+        <div class="flag" id="modal-flag"></div>
+        <h2 id="modal-name"></h2>
+        <p><strong>Capital:</strong> <span id="modal-capital"></span></p>
+        <p><strong>Região:</strong> <span id="modal-region"></span></p>
+        <p><strong>População:</strong> <span id="modal-population"></span></p>
+    </div>
+</div>
+
+<script>
+    const container = document.getElementById('country-container');
+    const modal = document.getElementById('country-modal');
+    const modalFlag = document.getElementById('modal-flag');
+    const modalName = document.getElementById('modal-name');
+    const modalCapital = document.getElementById('modal-capital');
+    const modalRegion = document.getElementById('modal-region');
+    const modalPopulation = document.getElementById('modal-population');
+    const modalClose = document.getElementById('modal-close');
+
+    // Cria card com bandeira como imagem
+    function makeCard(country) {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+            <div class="flag" aria-hidden="true">
+                <img src="${country.flags.png}" 
+                     alt="Bandeira de ${country.name.common}" 
+                     style="width:100%; height:100%; object-fit:cover;">
+            </div>
+            <div class="name">${country.name.common}</div>
+            <div class="meta">Capital: ${country.capital ? country.capital[0] : 'N/A'}</div>
+            <div class="meta">Região: ${country.region || 'N/A'}</div>
+        `;
+        card.addEventListener('click', () => openModal(country.name.common));
+        return card;
+    }
+
+    // Abre modal com bandeira e infos
+    async function openModal(name) {
+        const res = await fetch(`https://restcountries.com/v3.1/name/${encodeURIComponent(name)}`);
+        const data = await res.json();
+        const c = data[0];
+        modalFlag.innerHTML = `
+            <img src="${c.flags.png}" 
+                 alt="Bandeira de ${c.name.common}" 
+                 style="width:100%; height:100%; object-fit:cover;">
+        `;
+        modalName.textContent = c.name.common;
+        modalCapital.textContent = c.capital ? c.capital[0] : 'N/A';
+        modalRegion.textContent = c.region || 'N/A';
+        modalPopulation.textContent = c.population.toLocaleString('pt-BR');
+        modal.style.display = 'flex';
+    }
+
+    modalClose.addEventListener('click', () => modal.style.display = 'none');
+    window.addEventListener('click', e => {
+        if (e.target === modal) modal.style.display = 'none';
+    });
+
+    // Carrega países
+    async function loadCountries() {
+        const res = await fetch('https://restcountries.com/v3.1/all');
+        const data = await res.json();
+        container.innerHTML = '';
+        data.forEach(c => container.appendChild(makeCard(c)));
+    }
+
+    loadCountries();
+</script>
+
+</body>
+</html>
